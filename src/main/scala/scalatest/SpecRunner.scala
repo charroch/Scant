@@ -16,6 +16,7 @@ import scala.collection.JavaConversions._
 import android.app.{Activity, Instrumentation}
 import org.scalatest._
 import tools.StringReporter
+import android.content.Context
 
 
 class SpecRunner extends SpecRunnerComponent with DefaultInstrumentationReporter
@@ -42,7 +43,6 @@ abstract class SpecRunnerComponent extends Instrumentation with InstrumentationR
   }
 
   override def onException(obj: Object, e: Throwable) = {
-    println("TEST ecetion " + e)
     super.onException(obj, e)
   }
 
@@ -72,10 +72,9 @@ abstract class SpecRunnerComponent extends Instrumentation with InstrumentationR
   def injectContext(s: Suite) = {
     if (classOf[AndroidTestCase].isAssignableFrom(s.getClass)) {
       s.asInstanceOf[AndroidTestCase].setContext(this.getTargetContext)
-      //
-      //      s.asInstanceOf[ {
-      //        def setTestContext(c: Context): Unit
-      //      }].setTestContext(this.getTargetContext)
+      s.asInstanceOf[ {
+        def setTestContext(c: Context): Unit
+      }].setTestContext(this.getTargetContext)
     }
     s
   }
