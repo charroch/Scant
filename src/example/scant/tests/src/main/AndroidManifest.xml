@@ -12,7 +12,7 @@
 
     <instrumentation android:label="Tests"
                      android:targetPackage="com.novoda.scant"
-                     android:name="android.test.InstrumentationTestRunner"/>
+                     android:name="org.scalatest.tools.SpecRunner"/>
 
     <uses-sdk android:minSdkVersion="14"/>
 </manifest>

@@ -14,14 +14,18 @@ object Scant extends Build {
       libraryDependencies ++= Seq(
         "com.google.android" % "support-v4" % "r6",
         "org.scalatest" %% "scalatest" % "1.8-SNAPSHOT",
-        "com.google.android" % "android" % "4.0.1.2",
-        "com.google.android" % "android-test" % "4.0.1.2"
+        "com.google.android" % "android" % "4.0.1.2" % "provided",
+        "com.google.android" % "android-test" % "4.0.1.2" % "provided"
       )
     )
   )
 
   object General {
     val settings = Defaults.defaultSettings ++ Seq(
+      resolvers ++= Seq(
+        "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+        "releases" at "http://oss.sonatype.org/content/repositories/releases"
+      ),
       name := "SantAndroidTesting",
       version := "0.1",
       versionCode := 0,
@@ -38,10 +42,8 @@ object Scant extends Build {
         AndroidProject.androidSettings ++
         TypedResources.settings ++
         proguardSettings ++
-        AndroidManifestGenerator.settings ++
-        AndroidMarketPublish.settings ++ Seq(
-        keyalias in Android := "change-me",
-        libraryDependencies += "org.scalatest" %% "scalatest" % "1.7.RC1" % "test"
+        AndroidManifestGenerator.settings ++ Seq(
+        libraryDependencies += "org.scalatest" %% "scalatest" % "1.8-SNAPSHOT" % "test"
       )
   }
 
@@ -57,8 +59,13 @@ object Scant extends Build {
     settings = General.settings ++
       AndroidTest.settings ++
       General.proguardSettings ++ Seq(
-      name := "SantAndroidTestingTests"
+      name := "SantAndroidTestingTests",
+      instrumentationRunner in Android := "org.scalatest.tools.SpecRunner",
+      dxInputs in Android ~= {
+        (inputs: Seq[File]) =>
+          inputs.filterNot(n => n.getName.contains("specs") || n.getName.contains("scalatest"))
+      }
     )
-  ) dependsOn main
+  ) dependsOn(main, root)
 
 }
