@@ -1,13 +1,5 @@
 package org.scalatest.tools
 
-import _root_.android.app.Activity
-import _root_.android.app.Instrumentation
-import _root_.android.app.Instrumentation._
-import _root_.android.os.Bundle
-import _root_.android.os.Looper
-import _root_.android.test.AndroidTestCase
-import _root_.android.test.InstrumentationTestCase
-import _root_.dalvik.system.DexFile
 import dalvik.system.DexFile
 import java.io.File
 import android.os.{Looper, Bundle}
@@ -17,35 +9,26 @@ import android.app.{Activity, Instrumentation}
 import org.scalatest._
 import android.content.Context
 import android.util.Log
-
+import scalatest.ADBLogger
 
 class SpecRunner extends SpecRunnerComponent with DefaultInstrumentationReporter
 
-abstract class SpecRunnerComponent extends Instrumentation with InstrumentationReporter {
+abstract class SpecRunnerComponent extends Instrumentation with InstrumentationReporter with ADBLogger {
 
   override def onCreate(arguments: Bundle) {
     super.onCreate(arguments);
-    Log.i("TEST", "Bundle received" + arguments)
+    debug("Starting running test with bundle" + arguments)
     start()
   }
 
   override def onStart() {
     Looper.prepare()
     val dexFile = new DexFile(new File(getContext.getApplicationInfo.publicSourceDir));
-
-    Log.i("TEST", "Bundle received" + dexFile.entries()
-      .withFilter(isSpec)
-      .collect(asSuite).collect(injectContext).foreach(println))
-
-
     dexFile.entries()
       .withFilter(isSpec)
       .collect(asSuite)
       .map(injectContext andThen injectInstrumentation)
       .foreach(run)
-
-
-
     finish(Activity.RESULT_OK, new Bundle())
   }
 
