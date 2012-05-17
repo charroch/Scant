@@ -53,6 +53,11 @@ object Scant extends Build {
     settings = General.fullAndroidSettings
   )
 
+  def scalaTestLogger(s: Logger): AndroidTest.TestParser = {
+    i =>
+      io.Source.fromInputStream(i).getLines.foreach(s.info(_))
+  }
+
   lazy val tests = Project(
     "ScantAndroidTests",
     file("src/example/scant/tests"),
@@ -61,6 +66,9 @@ object Scant extends Build {
       General.proguardSettings ++ Seq(
       name := "SantAndroidTestingTests",
       instrumentationRunner in Android := "org.scalatest.tools.SpecRunner",
+      testOutputParser in Android <<= streams map {
+        (s: TaskStreams) => Some(scalaTestLogger(s.log))
+      },
       dxInputs in Android ~= {
         (inputs: Seq[File]) =>
           inputs.filterNot(n => n.getName.contains("specs") || n.getName.contains("scalatest"))

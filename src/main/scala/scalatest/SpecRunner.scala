@@ -8,16 +8,20 @@ import scala.collection.JavaConversions._
 import android.app.{Activity, Instrumentation}
 import org.scalatest._
 import android.content.Context
-import android.util.Log
 import scalatest.ADBLogger
+import util.matching.Regex
 
 class SpecRunner extends SpecRunnerComponent with DefaultInstrumentationReporter
 
 abstract class SpecRunnerComponent extends Instrumentation with InstrumentationReporter with ADBLogger {
 
+  var test: Option[Regex] = None
+
   override def onCreate(arguments: Bundle) {
     super.onCreate(arguments);
-    debug("Starting running test with bundle" + arguments)
+    debug("Starting running test\n")
+    debug(arguments.getString("class"))
+    test = InstrumentationOption(arguments).filter
     start()
   }
 
@@ -25,7 +29,7 @@ abstract class SpecRunnerComponent extends Instrumentation with InstrumentationR
     Looper.prepare()
     val dexFile = new DexFile(new File(getContext.getApplicationInfo.publicSourceDir));
     dexFile.entries()
-      .withFilter(isSpec)
+      .withFilter(filterTest(test))
       .collect(asSuite)
       .map(injectContext andThen injectInstrumentation)
       .foreach(run)
@@ -69,8 +73,12 @@ abstract class SpecRunnerComponent extends Instrumentation with InstrumentationR
     case _ => s
   }
 
-  def isSpec(klass: String): Boolean = {
-    klass.endsWith("Spec") || klass.endsWith("Specs")
+  def filterTest(reg: Option[Regex])(klass: String): Boolean = {
+    val specs = reg.getOrElse(""".*Spec(s)?""".r)
+    klass match {
+      case specs(_) => true
+      case _ => false
+    }
   }
 }
 
@@ -96,4 +104,17 @@ class SimpleInstrumentationReporter(inst: Instrumentation) extends StringReporte
 
   def dispose() {
   }
+}
+
+case class InstrumentationOption(filter: Option[Regex])
+
+object InstrumentationOption {
+  def apply(bundle: Bundle) = new InstrumentationOption(
+    if (bundle.containsKey("class")) {
+
+      Some(bundle.getString("class").r)
+    } else {
+      None
+    }
+  )
 }
